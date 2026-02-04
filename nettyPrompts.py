@@ -32,7 +32,9 @@ Remember, don't blindly repeat the contexts verbatim. And here is the user quest
 # questions. This is not ideal, but it is a good tradeoff between response time
 # and quality.
 _more_questions_prompt = """
-You are a helpful assistant that helps the user to ask related questions, based on user's original question and the related contexts. Please identify worthwhile topics that can be follow-ups, and write questions no longer than 20 words each. Please make sure that specifics, like events, names, locations, are included in follow up questions so they can be asked standalone. For example, if the original question asks about "the Manhattan project", in the follow up question, do not just say "the project", but use the full name "the Manhattan project". Your related questions must be in the same language as the original question.
+You are a helpful assistant that helps the user to ask related questions, based on user's original question and the related contexts. Please identify worthwhile topics that can be follow-ups, and write questions no longer than 20 words each. Please make sure that specifics, like events, names, locations, are included in follow up questions so they can be asked standalone. For example, if the original question asks about "the Manhattan project", in the follow up question, do not just say "the project", but use the full name "the Manhattan project". 
+
+IMPORTANT: Your related questions must be in the same language as the original question. If the original question is in English, you MUST output English. If you are unsure, output in English.
 
 Here are the contexts of the question:
 

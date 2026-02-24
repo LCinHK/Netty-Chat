@@ -1,7 +1,7 @@
 @echo off
 pip install -r requirements_local.txt
 pause
-python netty_local_server.py
+python eceasy_local_server.py
 echo Starting Server...
 echo.
 
@@ -11,5 +11,5 @@ echo Current Provider settings:
 echo Please ensure you have configured your LLM provider in the .env file.
 echo.
 echo Installing dependencies from requirements_local.txt...
-echo Starting Netty Chat Local Server...
+echo Starting ECEasy Local Server...
 

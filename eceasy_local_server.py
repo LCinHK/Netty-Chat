@@ -1,6 +1,6 @@
 """
-This module implements a local-only backend server for Netty-Chat.
-It replaces the Lepton AI dependency with a local Ollama instance (compatible with OpenAI API).
+This module implements a local-only backend server for ECEasy.
+It replaces the Lepton AI dependency with local Ollama, OpenAI, or DeepSeek as the LLM provider.
 """
 
 import json
@@ -48,7 +48,7 @@ except ImportError:
     DDGS = None
 
 # ======== Local Imports ========
-import nettyPrompts
+import ecEasyPrompts
 try:
     from arag.arag import get_rag_context
 except ImportError:
@@ -65,7 +65,7 @@ load_dotenv(override=True)
 LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "ollama").lower()
 
 # --- Common Config ---
-KV_NAME = "netty-chat-local.kv"
+KV_NAME = "eceasy-chat-local.kv"
 REFERENCE_COUNT = 8
 SHOULD_DO_RELATED_QUESTIONS = True
 
@@ -207,7 +207,7 @@ def get_related_questions(query: str, contexts: List[dict]) -> List[str]:
 
     context_text = "\n\n".join([c["snippet"] for c in contexts])[:4000] # Limit context size
 
-    prompt = nettyPrompts._more_questions_prompt.format(context=context_text)
+    prompt = ecEasyPrompts._more_questions_prompt.format(context=context_text)
     prompt += f"\n{query}"
 
     try:
@@ -291,7 +291,7 @@ def stream_response(
         [f"[[citation:{i+1}]] {c['snippet']}" for i, c in enumerate(contexts)]
     )
 
-    system_prompt = nettyPrompts._rag_query_text.format(context=context_block)
+    system_prompt = ecEasyPrompts._rag_query_text.format(context=context_block)
 
     llm_response_accumulated = []
 

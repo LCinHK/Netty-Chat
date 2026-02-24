@@ -1,5 +1,5 @@
 """
-This module implements the core backend server for Netty-Chat, a Retrieval-Augmented
+This module implements the core backend server for ECEasy, a Retrieval-Augmented
 Generation (RAG) application. It uses FastAPI to create a web server that provides
 endpoints for querying a Large Language Model (LLM) with context retrieved from various
 sources.
@@ -208,8 +208,8 @@ def stream_and_cache_response(
 # ======== FastAPI Application Setup ========
 
 app = FastAPI(
-    title="Netty-Chat Server",
-    description="A standalone FastAPI server for the Netty-Chat RAG application.",
+    title="ECEasy Server",
+    description="A standalone FastAPI server for the ECEasy RAG application.",
 )
 
 # Thread pool for background tasks like generating related questions.

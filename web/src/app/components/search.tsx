@@ -33,7 +33,7 @@ export const Search: FC = () => {
           autoFocus
           placeholder={
             [
-              "Ask Netty AI anything ...",
+              "Ask ECEasy anything ...",
               "What do you want to learn today?",
               "Search for a topic ...",
               "It's good to see you!",

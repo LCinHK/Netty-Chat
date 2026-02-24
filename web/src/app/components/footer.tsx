@@ -8,7 +8,7 @@ export const Footer: FC = () => {
         accuracy.
       </div>
       <div className="text-zinc-400">
-        LLM, Vector DB, and core components are powered by Netty.
+        LLM, Vector DB, and core components are powered by ECEasy.
       </div>
       <div className="flex gap-2 justify-center">
         {/* <div>
@@ -29,9 +29,9 @@ export const Footer: FC = () => {
         </a>
         <a
           className="hover:text-zinc-950"
-          href="https://github.com/OodavidsinoO/Netty-RAG"
+          href="https://github.com/LCinHK/ECEasy"
         >
-          Netty GitHub
+          ECEasy GitHub
         </a>
         <a className="hover:text-zinc-950" href="https://www.ust.hk/news">
           HKUST News

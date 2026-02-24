@@ -26,10 +26,10 @@ export const Logo: FC = () => {
             d="M51.2,24.5c-1.1-0.9-2.6-1.7-4.9-3.1l-3.8-2.2l-3.8,2.2c-2.3,1.4-3.8,2.2-4.9,3.1l8,4.6  c0.2,0.1,0.5,0.3,0.7,0.4c0.2-0.1,0.4-0.3,0.7-0.4L51.2,24.5z"
           ></path>
         </svg> */}
-        <img src="/ui/icon.png" alt="Netty Copilot" className="logo" />
+        <img src="/ui/icon.png" alt="ECEasy" className="logo" />
       </div>
       <div className="text-center font-medium text-2xl md:text-3xl text-zinc-950 relative text-nowrap">
-        Netty Copilot
+        ECEasy
       </div>
       <div className="transform scale-75 origin-left border items-center rounded-lg bg-gray-100 px-2 py-1 text-xs font-medium text-zinc-600">
         HKUST

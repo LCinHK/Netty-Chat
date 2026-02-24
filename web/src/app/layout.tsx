@@ -7,9 +7,9 @@ import { Suspense } from "react";
 // const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Netty Copilot",
+  title: "ECEasy",
   description:
-    "Netty: Your computer network co-pilot. An interactive, intelligent assistant tailored for computer network education.",
+    "ECEasy: Your computer network co-pilot. An interactive, intelligent assistant tailored for computer network education.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

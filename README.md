@@ -1,68 +1,70 @@
-# INFO: This forked version of Chat with Netty is modified to remove usage of leptons. 
-## Please refer to the original repository
-<div align="center">
-<h1 align="center">Chat with Netty</h1>
-A customizable LLM specialized in Computer Networking and Cybersecurity.
-<br/>
-</div>
+# How to Run ECEasy Locally (Without Lepton AI)
 
-## How to use
+This setup allows you to run the ECEasy backend locally using **Ollama**, **OpenAI**, or **DeepSeek** as the LLM provider.
 
-<!-- Setup .env -->
-1. Create a `.env` file in the root directory.
-```.env
-LEPTON_WORKSPACE_TOKEN=YOUR_LEPTON_WORKSPACE_TOKEN
-```
-2. Set up the environment variables.
-```shell
-export $(cat .env | xargs)
-```
-```powershell
-cat .env | %{ $_ -replace "^(.*)=(.*)$", "Set-Item Env:$($matches[1]) $matches[2]" } | iex
-```
-3. Build Next.js App
-```shell
-cd web && npm install && npm run build
-```
-4. Set up virtual environment
-```shell
-cd ..
-python -m venv venv
-source venv/bin/activate
-pip install -U -r requirements.txt --no-cache-dir
-```
-5. Run the server
-```shell
-python chat_with_netty.py
+## 1. Prerequisites
+
+- Python 3.10+
+- (Optional) Use a virtual environment:
+  ```bash
+  python -m venv .venv
+  .venv\Scripts\activate  # Windows
+  # source .venv/bin/activate  # Linux/Mac
+  ```
+
+## 2. Configuration
+
+Edit the `.env` file to select your LLM provider and configure keys.
+
+### Example for OpenAI:
+```dotenv
+LLM_PROVIDER="openai"
+OPENAI_API_KEY="sk-your-openai-api-key"
+OPENAI_MODEL="gpt-4o"
 ```
 
-## One-liner brainless setup
-```shell
-export $(cat .env | xargs) && cd web && npm install && npm run build && cd .. && python -m venv venv && source venv/bin/activate && pip install -r requirements.txt && python chat_with_netty.py
-```
-```powershell
-cat .env | %{ $_ -replace "^(.*)=(.*)$", "Set-Item Env:$($matches[1]) $matches[2]" } | iex; cd web; npm install; npm run build; cd ..; python -m venv venv; .\venv\Scripts\Activate.ps1; pip install -r requirements.txt; python chat_with_netty.py
+### Example for DeepSeek:
+```dotenv
+LLM_PROVIDER="deepseek"
+DEEPSEEK_API_KEY="sk-your-deepseek-api-key"
+DEEPSEEK_BASE_URL="https://api.deepseek.com"
+DEEPSEEK_MODEL="deepseek-chat"
 ```
 
-## Environment Variables
-```.env
-BACKEND=DUCKDUCKGO
-LLM_USE_CUSTOM_SERVER=True
-# === ChatGPT ===
-LLM_REMOTE_OPENAI_URL=https://free.v36.cm/v1/
-LLM_REMOTE_OPENAI_MODEL=gpt-4o-mini
-LLM_REMOTE_OPENAI_API_KEY=[YOUR_API_KEY]
-# === DeepSeek R1 (Shared; 15 Reqs/Min/IP) ===
-LLM_REMOTE_URL=https://ai.bestip.one/v1/ # https://ai.bestip.one (Global); https://api.bestai.cfd (Asia)
-LLM_REMOTE_MODEL=deepseek-r1 # deepseek-r1-search
-LLM_REMOTE_API_KEY=sk-LWaFHAG2PGwWZeBHmn0RkrTlsjZ9m78f2DuYWkxqWZkeZuY4
-# === Lepton ===
-LEPTON_WORKSPACE_ID=[YOUR_LEPTON]
-LEPTON_WORKSPACE_TOKEN=[YOUR_LEPTON]
-LEPTON_LLM_MODEL=mixtral-8x7b
-LEPTON_ENABLE_AUTH_BY_COOKIE=True
-# === Netty Chat ===
-RELATED_QUESTIONS=True
-KV_NAME=netty-chat.kv
-
+### Example for Ollama (Local):
+```dotenv
+LLM_PROVIDER="ollama"
+OLLAMA_BASE_URL="http://localhost:11434/v1"
+OLLAMA_MODEL="qwen3:4b" 
+# Make sure you have pulled the model in Ollama: `ollama pull qwen3:4b`
 ```
+
+## 3. Installation & Run
+
+We have provided a script `run_local_server.bat` for Windows users.
+
+Double-click `run_local_server.bat` or run in terminal:
+
+```bash
+.\run_local_server.bat
+```
+
+Or manually:
+
+```bash
+pip install -r requirements_local.txt
+python eceasy_local_server.py
+```
+
+The server will start at `http://0.0.0.0:8000`.
+
+## 4. Accessing the UI
+
+Open your browser and navigate to:
+[http://localhost:8000/ui/index.html](http://localhost:8000/ui/index.html)
+
+## Notes
+
+- **Lepton AI Removal**: The `eceasy_local_server.py` file is a complete replacement for `chat_with_netty_legacy.py` and does not depend on `leptonai`.
+- **RAG**: The Retrieval-Augmented Generation relies on the local ChromaDB database in `./arag/chromaVectorStore`. The server will attempt to load it. If it fails, RAG will be disabled but the chat will still work.
+

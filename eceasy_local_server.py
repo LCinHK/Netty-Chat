@@ -49,11 +49,26 @@ except ImportError:
 
 # ======== Local Imports ========
 import ecEasyPrompts
-try:
-    from arag.arag import get_rag_context
-except ImportError:
-    logger.warning("Could not import arag.arag. RAG functionality will be disabled.")
-    def get_rag_context(query): return []
+
+# ======== Knowledge Base Selection ========
+# Set KNOWLEDGE to "faiss" to use the FAISS ECE knowledge base (./faiss_index_university/)
+# Set KNOWLEDGE to "chroma" to use the ChromaDB network knowledge base (./arag/chromaVectorStore/)
+KNOWLEDGE = "faiss"  # <-- Change this to switch knowledge bases
+
+if KNOWLEDGE == "faiss":
+    try:
+        from faiss_rag import get_rag_context
+        logger.info("Knowledge base: FAISS (ECE knowledge — faiss_index_university/)")
+    except ImportError as e:
+        logger.warning(f"Could not import faiss_rag: {e}. RAG functionality will be disabled.")
+        def get_rag_context(query): return []
+else:  # "chroma"
+    try:
+        from arag.arag import get_rag_context
+        logger.info("Knowledge base: ChromaDB (Network knowledge — arag/chromaVectorStore/)")
+    except ImportError as e:
+        logger.warning(f"Could not import arag.arag: {e}. RAG functionality will be disabled.")
+        def get_rag_context(query): return []
 
 # ======== Configuration ========
 from dotenv import load_dotenv

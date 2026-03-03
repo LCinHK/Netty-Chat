@@ -306,8 +306,8 @@ def query_handler(
     )
 
 # Serve static files for the UI
-app.mount("/ui", StaticFiles(directory="ui"), name="ui")
-app.mount("/localData", StaticFiles(directory="localData"), name="localData")
+app.mount("../ui", StaticFiles(directory="ui"), name="ui")
+app.mount("../localData", StaticFiles(directory="localData"), name="localData")
 
 @app.get("/")
 def index():

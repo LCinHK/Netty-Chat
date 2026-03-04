@@ -1,5 +1,5 @@
-![ECEasy Logo](web/src/app/logo_name.svg)
-# How to Run ECEasy Locally 
+# How to Run ECEasy Locally (Without Lepton AI)
+
 This setup allows you to run the ECEasy backend locally using **Ollama**, **OpenAI**, or **DeepSeek** as the LLM provider.
 
 ## 1. Prerequisites
@@ -41,7 +41,7 @@ OLLAMA_MODEL="qwen3:4b"
 
 ## 3. Installation & Run
 
-On windows, We have provided a script `run_local_server.bat` for Windows users.
+We have provided a script `run_local_server.bat` for Windows users.
 
 Double-click `run_local_server.bat` or run in terminal:
 

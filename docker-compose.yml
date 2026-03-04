@@ -1,12 +1,11 @@
 services:
-  eceasy:
+  nettychat:
     build: .
     # ports:
-    #   - "8000:8000"
+    #   - "80:80"
 
   cloudflare:
     image: cloudflare/cloudflared
-    command: tunnel --url http://eceasy:8000
+    command: tunnel --url http://nettychat:80
     depends_on:
-      - eceasy
-
+      - nettychat

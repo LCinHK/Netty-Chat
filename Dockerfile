@@ -31,18 +31,17 @@ COPY requirements.txt .
 COPY arag/ ./arag/
 COPY localData/ ./localData/
 COPY .env .
-COPY eceasy_local_server.py .
-COPY ecEasyPrompts.py .
+COPY chat_with_netty.py .
+COPY nettyPrompts.py .
 
-# Copy the build files from the build image (Next.js distDir is "../ui" relative to /app)
-COPY --from=build /ui ./ui
+# Copy the build files from the build image
+COPY --from=build ../ui ./ui
 
 # Install the dependencies
 RUN pip install -U -r requirements.txt --no-cache-dir
 
 # Expose the port the app runs on
-EXPOSE 8000
+EXPOSE 80
 
 # Serve the app
-CMD ["python", "eceasy_local_server.py"]
-
+CMD ["python", "chat_with_netty.py"]

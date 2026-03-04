@@ -1,5 +1,0 @@
-ECEasy:
-- It is the name of a ECE undergaduate students' final year project.
-- These UG students are Lion Chen, Wang Xuanhao, Yao Zexin.
-- supervised by Prof.Meng Zili and Prof.Shao Qiming.
-- It is an AI Chatbot that be able to answer UG ECE students' questions.

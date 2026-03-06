@@ -69,7 +69,7 @@ LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "ollama").lower()
 # --- Common Config ---
 KV_NAME = "eceasy-chat-local.kv"
 REFERENCE_COUNT = 8 # change from 8 to 0
-SHOULD_DO_RELATED_QUESTIONS = False # change from true to false
+SHOULD_DO_RELATED_QUESTIONS = True # change from true to false
 
 # --- Provider Specific Config ---
 
@@ -307,7 +307,7 @@ def stream_response(
 
     # Send Contexts to client (for citations in UI)
     # === New Switches for markers ===
-    SEND_LLM_RESPONSE_MARKER = False    # Change to True if you want to send __LLM_RESPONSE__
+    SEND_LLM_RESPONSE_MARKER = True    # Change to True if you want to send __LLM_RESPONSE__
                                         # SHOULD_DO_RELATED_QUESTIONS set to false if not use
     #yield json.dumps(contexts)
     #yield "\n\n__LLM_RESPONSE__\n\n"

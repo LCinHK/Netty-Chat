@@ -3,7 +3,7 @@ fastapi
 httpx
 loguru
 pydantic
-
+hf_xet
 openai
 ddgs
 langchain-community==0.3.14

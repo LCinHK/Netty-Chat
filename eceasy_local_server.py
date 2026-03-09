@@ -62,7 +62,7 @@ PORT = int(os.environ.get("PORT", 8000))
 
 # --- Knowledge Base Selection ---
 # Set KNOWLEDGE in .env:
-#   "faiss"  → FAISS ECE knowledge base (./faiss_index_university/)
+#   "faiss"  → FAISS ECE knowledge base (./faiss_index_all-MiniLM-L6-v2/)
 #   "chroma" → ChromaDB network knowledge base (./arag/chromaVectorStore/)
 KNOWLEDGE = os.environ.get("KNOWLEDGE", "faiss").lower()
 
@@ -116,7 +116,7 @@ logger.info(f"Server         : {HOST}:{PORT}")
 if KNOWLEDGE == "faiss":
     try:
         from faiss_rag import get_rag_context
-        logger.info("Knowledge base: FAISS (ECE knowledge — faiss_index_university/)")
+        logger.info(f"Knowledge base: FAISS (ECE knowledge — faiss)")
     except ImportError as e:
         logger.warning(f"Could not import faiss_rag: {e}. RAG functionality will be disabled.")
         def get_rag_context(query): return []
@@ -420,7 +420,7 @@ async def query_endpoint(request: QueryRequest):
 
 @app.get("/")
 def home():
-    if UI_VERSION == "newUI":
+    if UI_VERSION == "newui":
         return RedirectResponse("/newUI/index.html")
     return RedirectResponse("/ui/index.html")
 

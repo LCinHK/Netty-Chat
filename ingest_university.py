@@ -1,14 +1,18 @@
 """
 Ingestion script for ECEasy FAISS knowledge base.
 Reads all .pdf, .docx, and .txt files from ECEknowledge/ and builds
-(or rebuilds) the FAISS index at faiss_index_university/.
+(or rebuilds) the FAISS index at faiss_index_all-MiniLM-L6-v2/.
 
 Dependencies (install before running):
     pip install pypdf docx2txt faiss-cpu langchain-community langchain-huggingface langchain-text-splitters
 """
 
+import os
 import shutil
 from pathlib import Path
+
+from dotenv import load_dotenv
+load_dotenv(override=True)
 
 from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -17,10 +21,56 @@ from langchain_community.vectorstores import FAISS
 
 # ======== Configuration ========
 DATA_PATH = Path("ECEknowledge")       # Source knowledge folder
-INDEX_PATH = "faiss_index_university"  # Output FAISS index folder
+# Note: INDEX_PATH is now derived automatically from EMBEDDING_MODEL_HUB_NAME in .env
+# e.g. "BAAI/bge-small-en-v1.5" → "./faiss_index_bge-small-en-v1.5"
 
 # Files / patterns to skip (e.g. macOS metadata files)
 SKIP_PATTERNS = {".DS_Store"}
+
+
+def _index_name_from_hub(hub_name: str) -> str:
+    """
+    Derives a filesystem-safe FAISS index folder name from a Hub model name.
+      "BAAI/bge-small-en-v1.5"  →  "faiss_index_bge-small-en-v1.5"
+      "all-MiniLM-L6-v2"        →  "faiss_index_all-MiniLM-L6-v2"
+    """
+    short = hub_name.split("/")[-1]
+    return f"faiss_index_{short}"
+
+
+def _resolve_embedding_model() -> tuple[str, str]:
+    """
+    Returns (model_name_or_path, faiss_index_path).
+
+    Model resolution priority:
+      1. If EMBEDDING_MODEL_LOCAL_PATH in .env points to an existing local directory
+         → use it directly (fully offline; sets TRANSFORMERS_OFFLINE=1).
+      2. Otherwise use EMBEDDING_MODEL_HUB_NAME as a Hub ID for auto-download/cache.
+
+    The FAISS index folder is always derived from EMBEDDING_MODEL_HUB_NAME so that
+    different models store their indexes in separate directories and never overwrite
+    each other. Must stay in sync with faiss_rag.py.
+    """
+    hub_name = os.environ.get("EMBEDDING_MODEL_HUB_NAME", "all-MiniLM-L6-v2").strip()
+    index_path = _index_name_from_hub(hub_name)
+
+    local_path = os.environ.get("EMBEDDING_MODEL_LOCAL_PATH", "").strip()
+    if local_path:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        resolved = os.path.normpath(os.path.join(base_dir, local_path))
+        if os.path.isdir(resolved):
+            os.environ["TRANSFORMERS_OFFLINE"] = "1"
+            os.environ["HF_DATASETS_OFFLINE"] = "1"
+            print(f"[Embedding] Using local model folder: '{resolved}' (offline)")
+            print(f"[Embedding] FAISS index will be saved to: '{index_path}'")
+            return resolved, index_path
+        else:
+            print(f"[Embedding] WARNING: EMBEDDING_MODEL_LOCAL_PATH '{local_path}' "
+                  f"(resolved: '{resolved}') not found — falling back to HuggingFace Hub.")
+
+    print(f"[Embedding] Using HuggingFace Hub model: '{hub_name}' (requires internet on first run)")
+    print(f"[Embedding] FAISS index will be saved to: '{index_path}'")
+    return hub_name, index_path
 
 
 def load_all_documents(data_path: Path):
@@ -119,10 +169,13 @@ def main():
     chunks = text_splitter.split_documents(docs)
     print(f"Created {len(chunks)} chunks")
 
+    # Resolve embedding model and derived index path
+    model_name, index_path = _resolve_embedding_model()
+
     # Embed and store in FAISS
-    print("\nLoading embedding model (all-MiniLM-L6-v2)...")
+    print("\nLoading embedding model...")
     embeddings = HuggingFaceEmbeddings(
-        model_name="all-MiniLM-L6-v2",
+        model_name=model_name,
         model_kwargs={"device": "cpu"},      # Change to "cuda" if GPU available
         encode_kwargs={"normalize_embeddings": True},
     )
@@ -133,14 +186,14 @@ def main():
         embedding=embeddings,
     )
 
-    # Remove old index before saving to avoid stale data
-    old_index = Path(INDEX_PATH)
+    # Remove old index for this model before saving to avoid stale data
+    old_index = Path(index_path)
     if old_index.exists():
         shutil.rmtree(old_index)
-        print(f"Removed old index at '{INDEX_PATH}'")
+        print(f"Removed old index at '{index_path}'")
 
-    vectorstore.save_local(INDEX_PATH)
-    print(f"\nDone! FAISS index saved to: '{INDEX_PATH}' ({len(chunks)} vectors)")
+    vectorstore.save_local(index_path)
+    print(f"\nDone! FAISS index saved to: '{index_path}' ({len(chunks)} vectors)")
 
 
 if __name__ == "__main__":

@@ -1,30 +1,83 @@
 """
 FAISS-based RAG module for ECEasy.
 Uses the FAISS index built from ECEknowledge/ (by ingest_university.py).
-Embedding model: all-MiniLM-L6-v2  (matches the model used during ingestion)
+The embedding model and index path are both controlled via .env.
 """
 
 import os
 import re
 import logging
 
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
 logger = logging.getLogger(__name__)
 
-# ======== Configuration ========
-FAISS_INDEX_PATH = "faiss_index_university"
-FAISS_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-
-# Similarity score threshold.
-# FAISS returns L2 distance by default; lower is more similar.
+# ======== Similarity score threshold ========
+# FAISS returns L2 distance; lower = more similar.
 # Chunks with distance >= this value are considered irrelevant and filtered out.
 FAISS_SCORE_THRESHOLD = 1.5
 
+
+# ======== Embedding model + index path resolution ========
+
+def _index_name_from_hub(hub_name: str) -> str:
+    """
+    Derives a filesystem-safe FAISS index folder name from a Hub model name.
+      "BAAI/bge-small-en-v1.5"  →  "faiss_index_bge-small-en-v1.5"
+      "all-MiniLM-L6-v2"        →  "faiss_index_all-MiniLM-L6-v2"
+    Uses only the last path component (after any '/') so org prefixes are stripped.
+    """
+    short = hub_name.split("/")[-1]
+    return f"faiss_index_{short}"
+
+
+def _resolve_embedding_model() -> tuple[str, str]:
+    """
+    Returns (model_name_or_path, faiss_index_path).
+
+    Model resolution priority:
+      1. If EMBEDDING_MODEL_LOCAL_PATH in .env points to an existing local directory
+         → use it directly (fully offline; sets TRANSFORMERS_OFFLINE=1).
+      2. Otherwise use EMBEDDING_MODEL_HUB_NAME as a Hub ID for auto-download/cache.
+
+    The FAISS index folder is always derived from EMBEDDING_MODEL_HUB_NAME so that
+    different models store their indexes in separate directories and never overwrite
+    each other. If EMBEDDING_MODEL_HUB_NAME is not set, falls back to "all-MiniLM-L6-v2".
+    """
+    hub_name = os.environ.get("EMBEDDING_MODEL_HUB_NAME", "all-MiniLM-L6-v2").strip()
+    index_path = _index_name_from_hub(hub_name)
+
+    local_path = os.environ.get("EMBEDDING_MODEL_LOCAL_PATH", "").strip()
+    if local_path:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        resolved = os.path.normpath(os.path.join(base_dir, local_path))
+        if os.path.isdir(resolved):
+            os.environ["TRANSFORMERS_OFFLINE"] = "1"
+            os.environ["HF_DATASETS_OFFLINE"] = "1"
+            print(f"[INFO] Embedding model : local folder '{resolved}' (offline mode)")
+            print(f"[INFO] FAISS index path: '{index_path}'")
+            logger.info(f"[FAISS RAG] Local model '{resolved}', index '{index_path}'")
+            return resolved, index_path
+        else:
+            print(f"[WARNING] EMBEDDING_MODEL_LOCAL_PATH '{local_path}' (resolved: '{resolved}') "
+                  f"not found — falling back to HuggingFace Hub.")
+            logger.warning("[FAISS RAG] Local model path not found, falling back to Hub.")
+
+    print(f"[INFO] Embedding model : HuggingFace Hub '{hub_name}' (requires internet on first run)")
+    print(f"[INFO] FAISS index path: '{index_path}'")
+    logger.info(f"[FAISS RAG] Hub model '{hub_name}', index '{index_path}'")
+    return hub_name, index_path
+
+
 # ======== Load embedding model & vector store once at module import ========
+_model_name, FAISS_INDEX_PATH = _resolve_embedding_model()
+
 _embeddings = HuggingFaceEmbeddings(
-    model_name=FAISS_EMBEDDING_MODEL,
+    model_name=_model_name,
     model_kwargs={"device": "cpu"},
     encode_kwargs={"normalize_embeddings": True},
 )

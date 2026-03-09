@@ -15,63 +15,106 @@ export const parseStreaming = async (
   onError?: (status: number) => void,
 ) => {
   const decoder = new TextDecoder();
-  let uint8Array = new Uint8Array();
-  let chunks = "";
+  let buffer = "";
   let sourcesEmitted = false;
+  let started = false;
+  let markdownBuffer = "";
+  let relatesBuffer = "";
+
   const response = await fetch(`/query`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Accept: "*./*",
+      Accept: "*/*",
     },
     signal: controller.signal,
     body: JSON.stringify({
       query,
       search_uuid,
+      generate_related_questions: true, // match your backend default
     }),
   });
+
   if (response.status !== 200) {
     onError?.(response.status);
     return;
   }
-  const markdownParse = (text: string) => {
-    onMarkdown(
-      text
-        .replace(/\[\[([cC])itation/g, "[citation")
-        .replace(/[cC]itation:(\d+)]]/g, "citation:$1]")
-        .replace(/\[\[([cC]itation:\d+)]](?!])/g, `[$1]`)
-        .replace(/\[[cC]itation:(\d+)]/g, "[citation]($1)"),
-    );
-  };
+
   fetchStream(
     response,
     (chunk) => {
-      uint8Array = new Uint8Array([...uint8Array, ...chunk]);
-      chunks = decoder.decode(uint8Array, { stream: true });
-      if (chunks.includes(LLM_SPLIT)) {
-        const [sources, rest] = chunks.split(LLM_SPLIT);
-        if (!sourcesEmitted) {
-          try {
-            onSources(JSON.parse(sources));
-          } catch (e) {
-            onSources([]);
+      buffer += decoder.decode(chunk, { stream: true });
+
+      // Keep processing until we find the LLM response start
+      if (!started) {
+        const markerIndex = buffer.indexOf(LLM_SPLIT);
+        if (markerIndex !== -1) {
+          // Everything before the marker is sources (JSON)
+          const sourcesPart = buffer.slice(0, markerIndex).trim();
+          buffer = buffer.slice(markerIndex + LLM_SPLIT.length).trimStart();
+          started = true;
+
+          if (!sourcesEmitted) {
+            try {
+              const parsedSources = JSON.parse(sourcesPart);
+              onSources(parsedSources);
+            } catch (e) {
+              console.error("Failed to parse sources:", e);
+              onSources([]);
+            }
+            sourcesEmitted = true;
           }
         }
-        sourcesEmitted = true;
-        if (rest.includes(RELATED_SPLIT)) {
-          const [md] = rest.split(RELATED_SPLIT);
-          markdownParse(md);
+        // If no marker yet, discard buffer (still in sources part)
+        else {
+          buffer = "";
+        }
+      }
+
+      // We are now in the LLM response part
+      if (started) {
+        const relatedIndex = buffer.indexOf(RELATED_SPLIT);
+
+        if (relatedIndex !== -1) {
+          // Take markdown up to related questions
+          markdownBuffer += buffer.slice(0, relatedIndex);
+          relatesBuffer = buffer.slice(relatedIndex + RELATED_SPLIT.length);
+
+          // Send final markdown
+          onMarkdown(markdownBuffer.trim());
+
+          // Try to parse related questions
+          try {
+            const parsedRelates = JSON.parse(relatesBuffer);
+            onRelates(parsedRelates);
+          } catch (e) {
+            console.error("Failed to parse related questions:", e);
+            onRelates([]);
+          }
+
+          // Clear buffers
+          buffer = "";
+          markdownBuffer = "";
+          relatesBuffer = "";
         } else {
-          markdownParse(rest);
+          // Still in markdown part
+          markdownBuffer += buffer;
+          onMarkdown(markdownBuffer.trim());
+          buffer = "";
         }
       }
     },
     () => {
-      const [_, relates] = chunks.split(RELATED_SPLIT);
-      try {
-        onRelates(JSON.parse(relates));
-      } catch (e) {
-        onRelates([]);
+      // End of stream - flush any remaining markdown
+      if (markdownBuffer) {
+        onMarkdown(markdownBuffer.trim());
+      }
+      // Final related questions parse if any leftover
+      if (relatesBuffer) {
+        try {
+          const parsed = JSON.parse(relatesBuffer);
+          onRelates(parsed);
+        } catch {}
       }
     },
   );
